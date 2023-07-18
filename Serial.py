@@ -1,6 +1,7 @@
 import serial
 import serial.tools.list_ports
 
+
 # 寻找串口
 def ser_port_find(ser_com):
     port_list = serial.tools.list_ports.comports()
@@ -15,6 +16,7 @@ def ser_port_find(ser_com):
     else:
         print("no serial found!")
         return 0  # 没有发现串口
+
 
 # 设置串口参数
 def ser_port_set(ser_com):
@@ -39,6 +41,27 @@ def ser_port_set(ser_com):
 def ser_port_open():
     ser_com = serial.Serial()  # 定义串口对象
     found = ser_port_find(ser_com)
+    if found != 1:
+        return None
+    opened = ser_port_set(ser_com)
+    if opened == 1:
+        return ser_com  # 串口打开成功
+    return None  # 串口打开失败
+
+
+# 寻找串口
+def ser_port_find_nano(ser_com):
+    try:
+        ser_com.port = "/dev/ttyTHS1"
+        return 1  # 成功找到串口
+    except:
+        print("no serial found!")
+        return 0  # 没有发现串口
+
+
+def ser_port_open_nano():
+    ser_com = serial.Serial()  # 定义串口对象
+    found = ser_port_find_nano(ser_com)
     if found != 1:
         return None
     opened = ser_port_set(ser_com)
