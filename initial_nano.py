@@ -82,7 +82,6 @@ def CornerHarris(inimg, img, threshold=0.01, show=False):
         cv_show('afterHarris', inimg)
     return inimg
 
-# 找中点
 def find_center(img):
     h, w = img.shape[:2]
     y_center = h/2
@@ -116,7 +115,7 @@ def gama_transfer(img, power1):
 def move_whitePattern(mask, moveSize_proportion=10, show=False):  # 输入黑底白色物体图
     imgcanny = cv2.Canny(mask, 50, 100)
     img_size = min(mask.shape[0], mask.shape[1])
-    _, fcon, hier = cv2.findContours(imgcanny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    fcon, hier = cv2.findContours(imgcanny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     for c in fcon:
         x, y, w, h = cv2.boundingRect(c)
         if w < img_size / moveSize_proportion or h < img_size / moveSize_proportion:
@@ -227,10 +226,10 @@ def Contours(img, whet_canny=False, allTheContours=True, draw=False, inimg=None)
     if whet_canny:
         img = cv2.Canny(img, 50, 100)
     if allTheContours:
-        _, fcon, hier = cv2.findContours(img, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
+        fcon, hier = cv2.findContours(img, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
     else:
-        _, fcon, hier = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    print("num_contours=", len(fcon))
+        fcon, hier = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    # print("num_contours=", len(fcon))
     if draw:
         cv2.drawContours(inimg, fcon, -1, (0, 255, 0), 2)
         cv_show("drawContours", inimg)
