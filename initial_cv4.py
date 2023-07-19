@@ -302,3 +302,64 @@ class MessageFormat(object):  # 通讯格式打包
 # 就...存下来看看大小
 def save2ss_size(img):
     cv2.imwrite('t_size' + str(int(time.time())) + '.jpg', img)
+
+# mask_Line--二值化图（白线黑色背景）|inimg--copy后小彩图
+def trace_oneline(mask_Line, inimg):
+    h, w = mask_Line.shape[:2]
+    mid_h = int(h / 2)
+    cv2.line(inimg, (0, mid_h), (w, mid_h), (0, 0, 255), 2)  # #-#
+    line1 = mask_Line[mid_h, :]
+    position = np.where(line1 == 255)
+    try:
+        lp = min(position[0])
+        rp = max(position[0])
+        print(lp, rp)
+        line_center = int((rp + lp) / 2)
+        cv2.circle(inimg, (line_center, mid_h), 3, (255, 20, 0), thickness=3)  # #-#
+        if (rp - lp) < w / 5:
+            whe_row = 1
+        else:
+            whe_row = 0
+    except:
+        whe_row = None
+        line_center = w / 2
+    return whe_row, line_center
+
+#  同上但多横线
+def trace_multlines(mask_Line, inimg):
+    h, w = mask_Line.shape[:2]
+    mid_h = int(h / 2)
+    cv2.line(inimg, (0, mid_h), (w, mid_h), (0, 0, 255), 2)  # #-#
+    line1 = mask_Line[mid_h, :]
+    position = np.where(line1 == 255)
+    if position is not []:
+        allLines = []
+        L = []
+        pp = None
+        for p in position[0]:
+            if pp is None or p == pp + 1:
+                L.append(p)
+            else:
+                if len(L) >= 5:
+                    allLines.append(L)
+                L = [p]
+            pp = p
+        if len(L) >= 5:
+            allLines.append(L)
+        whe_row = 1
+        centers = []
+        for line in allLines:
+            center = int((max(line) + min(line)) / 2)
+            centers.append(center)
+            if len(line) > w / 5:
+                whe_row = 0
+                cv2.circle(inimg, (center, mid_h), 3, (255, 20, 0), thickness=3)
+                return whe_row, center
+        for center in centers:  # #-#
+            cv2.circle(inimg, (center, mid_h), 3, (255, 20, 0), thickness=3)
+        if not centers:
+            centers = [w/2]
+    else:
+        whe_row = None
+        centers = [w/2]
+    return whe_row, centers
