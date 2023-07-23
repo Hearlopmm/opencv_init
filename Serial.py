@@ -1,6 +1,5 @@
 import serial
 import serial.tools.list_ports
-from opencv_init import initial
 
 
 # 寻找串口
@@ -119,16 +118,6 @@ def ser_read_gb(ser_com):
         return ser_message_read
     return None
 
-def ser_initial(nano=None):
-    if nano:
-        ser_com_name = ser_port_open_nano()
-    else:
-        ser_com_name = ser_port_open()
-    if ser_com_name is not None:
-        print("baudRate: ", ser_com_name.baudrate)
-        ser_send(ser_com_name, "-READY-")  # 已启动
-    MES = initial.MessageFormat()
-    return ser_com_name, MES
 
 
 if __name__ == '__main__':

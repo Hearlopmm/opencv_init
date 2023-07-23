@@ -5,6 +5,7 @@ import cv2
 import numpy
 import numpy as np
 import time
+import Serial as se
 
 
 # 定义一个函数，显示图片
@@ -82,12 +83,14 @@ def CornerHarris(inimg, img, threshold=0.01, show=False):
         cv_show('afterHarris', inimg)
     return inimg
 
+
 # 找中点
 def find_center(img):
     h, w = img.shape[:2]
-    y_center = h/2
-    x_center = w/2
+    y_center = h / 2
+    x_center = w / 2
     return y_center, x_center
+
 
 # !unchangeable
 # 缩放--新宽度
@@ -129,8 +132,15 @@ def move_whitePattern(mask, moveSize_proportion=10, show=False):  # 输入黑底
 
 
 # fps
-def get_fps(cap):
-    return cap.get(cv2.CAP_PROP_FPS)
+# 初始化要让两个fps_pTime = fps_cTime = 0
+def get_fps(show=False, inimg=None):
+    global fps_pTime, fps_cTime
+    fps_cTime = time.time()
+    fps = 1 / (fps_cTime - fps_pTime)
+    fps_pTime = fps_cTime
+    if show:
+        cv2.putText(inimg, f"fps: {int(fps)}", (25, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 0, 255), 2)
+    return fps
 
 
 # 自己的滤波器 —————————————————————————————————————————————————————————————————————
@@ -259,7 +269,7 @@ def init_modelFile(modelIndex, modelImages, path=None):
 
 # img:gray图
 # resize调整图片大小与模板相同（ORB尺度不变性不好）
-def ORB_match(img, modelIndex, modelImages, modelH=150, ORBthread=0.3):
+def ORB_match(img, modelIndex, modelImages, modelH=150, ORBthread=0.9):
     img = imgResize(img, modelH)
     # cv_show('model', img)
     source = []
@@ -300,11 +310,15 @@ class MessageFormat(object):  # 通讯格式打包
     def MesSendC(self, mes_single, message):
         return f"{self.stC}{mes_single}:{message}{self.end}"
 
+
 # 就...存下来看看大小
 def save2ss_size(img):
     cv2.imwrite('t_size' + str(int(time.time())) + '.jpg', img)
 
+
 # mask_Line--二值化图（白线黑色背景）|inimg--copy后小彩图
+# 返回值--是否有横线，竖线中点坐标x
+# 有横线whe_row=0，只有竖线whe_row=1
 def trace_oneline(mask_Line, inimg):
     h, w = mask_Line.shape[:2]
     mid_h = int(h / 2)
@@ -326,7 +340,10 @@ def trace_oneline(mask_Line, inimg):
         line_center = w / 2
     return whe_row, line_center
 
+
 #  同上但多横线
+# 返回值--是否有横线，竖线中点坐标x
+# 有横线whe_row=0，只有竖线whe_row=1
 def trace_multlines(mask_Line, inimg):
     h, w = mask_Line.shape[:2]
     mid_h = int(h / 2)
@@ -359,8 +376,40 @@ def trace_multlines(mask_Line, inimg):
         for center in centers:  # #-#
             cv2.circle(inimg, (center, mid_h), 3, (255, 20, 0), thickness=3)
         if not centers:
-            centers = [w/2]
+            centers = [w / 2]
     else:
         whe_row = None
-        centers = [w/2]
+        centers = [w / 2]
     return whe_row, centers
+
+
+def ser_initial(nano=None):
+    if nano:
+        ser_com_name = se.ser_port_open_nano()
+    else:
+        ser_com_name = se.ser_port_open()
+    if ser_com_name is not None:
+        print("baudRate: ", ser_com_name.baudrate)
+        se.ser_send(ser_com_name, "-READY-")  # 已启动
+    MES = MessageFormat()
+    return ser_com_name, MES
+
+def cap_initial(num=0):
+    cap = cv2.VideoCapture(num)
+    w = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+    h = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    pro = 640/w
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, h*pro)
+    return cap
+
+
+
+
+
+
+
+
+
+
+
